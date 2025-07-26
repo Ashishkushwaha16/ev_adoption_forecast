@@ -11,7 +11,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Load data
-data = pd.read_csv("data/ev_data_sample.csv")
+data = pd.read_csv("data/ev_data_sample2.csv")
 
 print("Initial shape:", data.shape)
 print(data.dtypes)
@@ -47,7 +47,7 @@ print("R2 Score:", r2_score(y, y_pred))
 # Save model
 os.makedirs("model", exist_ok=True)
 joblib.dump(model, "model/ev_model.pkl")
-print("\n✅ Model saved at: model/ev_model.pkl")
+print("\n Model saved at: model/ev_model.pkl")
 
 # Plot predictions
 plt.figure(figsize=(10, 5))

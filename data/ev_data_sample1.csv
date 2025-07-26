@@ -1,0 +1,11 @@
+Date,County,State,Vehicle Primary Use,Battery Electric Vehicles (BEVs),Plug-In Hybrid Electric Vehicles (PHEVs),Electric Vehicle (EV) Total,Non-Electric Vehicle Total,Total Vehicles,Percent Electric Vehicles
+2022-01-01,King,Washington,Personal,52000,14000,66000,340000,406000,16.3
+2022-02-01,Pierce,Washington,Commercial,21000,9000,30000,370000,400000,7.5
+2022-03-01,Snohomish,Washington,Personal,25000,10000,35000,300000,335000,10.4
+2022-04-01,Spokane,Washington,Personal,18000,5000,23000,320000,343000,6.7
+2022-05-01,Clark,Washington,Fleet,12000,4000,16000,210000,226000,7.1
+2022-06-01,Benton,Washington,Personal,8000,2000,10000,190000,200000,5.0
+2022-07-01,Thurston,Washington,Fleet,7000,2500,9500,185000,194500,4.9
+2022-08-01,Yakima,Washington,Commercial,6000,1500,7500,170000,177500,4.2
+2022-09-01,Whatcom,Washington,Personal,5000,1800,6800,165000,171800,4.0
+2022-10-01,Kitsap,Washington,Fleet,4500,1200,5700,150000,155700,3.7
