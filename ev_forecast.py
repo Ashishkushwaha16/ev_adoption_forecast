@@ -1,102 +1,62 @@
 # ev_forecast.py
 
-# --------------------------
-# EV Adoption Forecasting
-# --------------------------
-
-import numpy as np
 import pandas as pd
-import seaborn as sns
+import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import joblib
 import os
 
-from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# 1. Load Dataset
-DATA_PATH = os.path.join("data", "Electric_Vehicle_Population_By_County.csv")
-df = pd.read_csv(DATA_PATH)
+# Load data
+data = pd.read_csv("data/ev_data_sample.csv")
 
-# 2. Initial Checks
-print("Initial shape:", df.shape)
-print(df.dtypes)
-print("\nMissing values:\n", df.isnull().sum())
+print("Initial shape:", data.shape)
+print(data.dtypes)
+print("\nMissing values:\n", data.isnull().sum())
 
-# 3. Data Preprocessing
-df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-df = df[df['Date'].notnull()]
+# Convert 'Date' to datetime
+data["Date"] = pd.to_datetime(data["Date"])
 
-df['County'] = df['County'].fillna('Unknown')
-df['State'] = df['State'].fillna('Unknown')
+# Sort by Date
+data = data.sort_values(by="Date")
 
-# Convert numeric columns
-cols_to_clean = [
-    'Battery Electric Vehicles (BEVs)',
-    'Plug-In Hybrid Electric Vehicles (PHEVs)',
-    'Electric Vehicle (EV) Total',
-    'Non-Electric Vehicle Total',
-    'Total Vehicles'
-]
-for col in cols_to_clean:
-    df[col] = df[col].astype(str).str.replace(',', '').astype(int)
+# Feature engineering
+data["Monthly Growth"] = data["Electric Vehicle (EV) Total"].pct_change().fillna(0)
+data["Lag1"] = data["Electric Vehicle (EV) Total"].shift(1).fillna(method='bfill')
+data["RollingMean"] = data["Electric Vehicle (EV) Total"].rolling(3).mean().fillna(method='bfill')
 
-# Handle outliers
-Q1 = df['Percent Electric Vehicles'].quantile(0.25)
-Q3 = df['Percent Electric Vehicles'].quantile(0.75)
-IQR = Q3 - Q1
-lower_bound = Q1 - 1.5 * IQR
-upper_bound = Q3 + 1.5 * IQR
+# Prepare input/output
+features = ["Lag1", "RollingMean", "Monthly Growth"]
+X = data[features]
+y = data["Electric Vehicle (EV) Total"]
 
-df['Percent Electric Vehicles'] = np.where(df['Percent Electric Vehicles'] > upper_bound, upper_bound,
-                                           np.where(df['Percent Electric Vehicles'] < lower_bound, lower_bound,
-                                                    df['Percent Electric Vehicles']))
+# Train model
+model = LinearRegression()
+model.fit(X, y)
 
-# 4. Feature Engineering
-df['Year'] = df['Date'].dt.year
-df['Month'] = df['Date'].dt.month
-df['Quarter'] = df['Date'].dt.quarter
-
-le_county = LabelEncoder()
-le_state = LabelEncoder()
-le_use = LabelEncoder()
-
-df['County_encoded'] = le_county.fit_transform(df['County'])
-df['State_encoded'] = le_state.fit_transform(df['State'])
-df['Vehicle_Use_encoded'] = le_use.fit_transform(df['Vehicle Primary Use'])
-
-# 5. Define features and target
-features = [
-    'Year', 'Month', 'Quarter',
-    'County_encoded', 'State_encoded', 'Vehicle_Use_encoded',
-    'Battery Electric Vehicles (BEVs)',
-    'Plug-In Hybrid Electric Vehicles (PHEVs)',
-    'Non-Electric Vehicle Total'
-]
-target = 'Electric Vehicle (EV) Total'
-
-X = df[features]
-y = df[target]
-
-# 6. Train/Test Split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# 7. Train Model
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
-
-# 8. Evaluation
-y_pred = model.predict(X_test)
-
+# Predict & evaluate
+y_pred = model.predict(X)
 print("\nModel Evaluation:")
-print("MAE:", mean_absolute_error(y_test, y_pred))
-print("MSE:", mean_squared_error(y_test, y_pred))
-print("R2 Score:", r2_score(y_test, y_pred))
+print("MAE:", mean_absolute_error(y, y_pred))
+print("MSE:", mean_squared_error(y, y_pred))
+print("R2 Score:", r2_score(y, y_pred))
 
-# 9. Save Model
-MODEL_PATH = os.path.join("model", "ev_model.pkl")
+# Save model
 os.makedirs("model", exist_ok=True)
-joblib.dump(model, MODEL_PATH)
-print(f"\n✅ Model saved at: {MODEL_PATH}")
+joblib.dump(model, "model/ev_model.pkl")
+print("\n✅ Model saved at: model/ev_model.pkl")
+
+# Plot predictions
+plt.figure(figsize=(10, 5))
+plt.plot(data["Date"], y, label="Actual", marker="o")
+plt.plot(data["Date"], y_pred, label="Predicted", linestyle="--")
+plt.title("EV Adoption Trend")
+plt.xlabel("Date")
+plt.ylabel("EV Total")
+plt.legend()
+plt.tight_layout()
+plt.savefig("ev_forecast_plot.png")
+plt.show()
